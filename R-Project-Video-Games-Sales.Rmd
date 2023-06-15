@@ -1,0 +1,305 @@
+---
+title: "Project"
+author: "Adeliia Salieva"
+date: "3/6/2023"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Intro to dataset
+
+Data set is about Video Game Sales. Here is a link to the data set: https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings
+
+Each observation is Video game sales from Vgchartz and corresponding ratings from Metacritic.
+
+```{r}
+library(tidyverse)
+game_sales <- read_csv("Video_Games_Sales_as_at_22_Dec_2016.csv")
+```
+	
+Let's cee the number ot rows and columns in the data set:
+
+```{r}
+str(game_sales)
+```
+
+Let's see what type of variables are in this data set using summary():
+
+```{r}
+summary(game_sales)
+```
+	
+## Exploratory analysis: Categorical varibales
+
+### Challenge problem (required for 293A, bonus for 162): A third plot that shows another relationship in your data, and your interpretation of it.
+	
+Let's see what the counts are for each of the categorical variables (Platform, Genre, Publisher, Developer, Rating):
+
+```{r}
+# platform
+game_sales %>%
+  group_by(Platform) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+
+game_sales %>%
+  group_by(Platform) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(reorder(Platform,count), count)) +
+  geom_bar(stat="identity")
+
+# genre
+game_sales %>%
+  group_by(Genre) %>%
+  summarize(count = n()) %>%
+  arrange(count)
+
+game_sales %>%
+  group_by(Genre) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(reorder(Genre,count), count)) +
+  geom_bar(stat="identity")
+
+# publisher
+game_sales %>%
+  drop_na() %>%
+  group_by(Publisher) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+
+game_sales %>%
+  drop_na() %>%
+  group_by(Publisher) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(reorder(Publisher,count), count)) +
+  geom_bar(stat="identity")
+
+# developer
+game_sales %>%
+  group_by(Developer) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+
+game_sales %>%
+  group_by(Developer) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(reorder(Developer,count), count)) +
+  geom_bar(stat="identity")
+
+# rating
+game_sales %>%
+  group_by(Rating) %>%
+  summarize(count = n()) %>%
+  arrange(count)
+
+game_sales %>%
+  group_by(Rating) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(reorder(Rating,count), count)) +
+  geom_bar(stat="identity")
+  
+```
+
+We can see that:
+
+1. Platforms: There are a 31 platforms available. And the largest amount of games is available on PS2 platform.
+
+2. Genre: The most number of games are in Action Genre. The least number of games are in Puzzle Genre.
+
+3. Publisher: There are 263 publishers. The largest number of games is published by Electronic Arts.
+
+4. Developers: There are 1,697 developers. The largest number of games is developed by Ubisoft.
+
+5. Rating: The most number of game are rated E (Everyone).
+
+## Exploratory analysis: Quantitative variables
+
+Let's visualize what correlations are there between quantitative variables (Global Sales, Critic Score, Critic Count, User Count):
+
+Note: User Score is a char type. So it can not be included here.
+
+```{r}
+game_sales %>%
+  select(Global_Sales, Critic_Score, Critic_Count, User_Count) %>%
+  pairs()
+```
+
+We can see that:
+
+There are no clear and certain relationships we can note. So let's look into relationship between Global Sales and Critic Score variables.
+
+### At least one scatterplot showing the relationship between two quantitative variables in your dataset, colored by a categorical variable in the dataset.
+
+Let's explore the relationship between Global Sales and Critic Score between platforms for Action Genre.
+
+```{r}
+game_sales %>%
+  filter(Genre == "Action") %>%
+  drop_na() %>%
+  ggplot(aes(Critic_Score, Global_Sales, color = Platform)) +
+  geom_point()
+```
+
+We can see:
+
+Even though there are a some of outliers, most of the games have Global Sales of less than 5 millions. So let's filter the data set with Global Sales that are less than 5 mil.
+
+```{r}
+game_sales %>%
+  filter(Genre == "Action", Global_Sales < 5) %>%
+  drop_na() %>%
+  ggplot(aes(Critic_Score, Global_Sales, color = Platform)) +
+  geom_point()
+```
+
+### At least one correlation between two quantitative variables in your dataset, and your interpretation of the result.
+
+By looking at the scatter plot we can not precisely evaluate the correlation between Global Sales and Critic Score variables. So let's see the Pearson and Spearman values for Global Sales and Critic Score variables.
+
+```{r}
+game_sales %>%
+  drop_na() %>%
+  select(Global_Sales, Critic_Score) %>%
+  cor()
+
+game_sales %>%
+  drop_na() %>%
+  select(Global_Sales, Critic_Score) %>%
+  cor(method="spearman")
+```
+
+By looking at the table of we can say that between Global Sales and Critic Score there is a positive correlation:
+
+Pearson: 0.23
+
+Spearman: 0.38
+
+Now, let's visualize it.
+
+```{r}
+game_sales %>%
+  drop_na() %>%
+  filter(Genre == "Action", Global_Sales < 5) %>%
+  ggplot(aes(Critic_Score, Global_Sales)) +
+  geom_point() +
+  geom_smooth(method=lm)
+```
+
+### At least one linear regression between two quantitative variables in your dataset, and your interpretation of the result.
+
+Now, let's run a linear regression model on Global Sales as dependable and Critic Score as independent variable:
+
+```{r}
+summary(lm(Global_Sales ~ Critic_Score, data = game_sales))
+```
+
+We can see that:
+
+p = 2.2e-16 < 0.05. Means that we can reject the null hypothesis. And accept the alternative hypothesis that there is a positive correlation between Global Sales and Critic Score variables. 
+
+But note, that R-squared is only 0.06. Meaning that only 6% of our dependable variable (Global Sales) is explained by our independent variable (Critic Score).
+
+### At least one boxplot showing the relationship between a categorical and quantitative variable in your dataset.
+
+From Exploratory analysis of Categorical variables we remember that Action Genre is the one that has the largest number of games in it. Let's check if Action Genre also has the largest average in Global Sales compared to Other Genres? 
+
+Note: further we  will look into the data set with Global Sales less than 1 million because this is a range where comparison is more visual.
+
+```{r}
+game_sales %>%
+  filter(Global_Sales < 1) %>%
+  drop_na() %>%
+  ggplot(aes(Genre, Global_Sales)) +
+  geom_boxplot()
+```
+
+It seems that actually Sports Genre has the largest average in Global Sales compared to Other Genres.
+
+So let's test this using a t-test.
+
+## At least one t-test between a categorical and quantitative variable in your dataset, and your interpretation of the result.
+
+```{r}
+subset <- game_sales %>%
+  filter(Global_Sales < 1) %>%
+  drop_na() %>%
+  mutate(is_Sports = Genre == "Sports")
+
+t.test(Global_Sales ~ is_Sports, data = subset)
+```
+
+We can see that:
+
+p = 5.314e-12 < 0.05. Means that we can reject the null hypothesis. And we accept the alternative hypothesis that there is a difference in means of Global Sales between Sports Genre and Other Genres. Mean of Global Sales in Sports Genre is 0.3493888 and in Other Genres is 0.2796536. And with 95 percent confidence we can say that this difference in means will lay in interval: -0.08 -0.05
+
+Now, let's visualize it.
+
+```{r}
+subset %>%
+  ggplot(aes(is_Sports, Global_Sales)) +
+  geom_boxplot()
+
+subset %>%
+  ggplot(aes(is_Sports, Global_Sales)) +
+  geom_boxplot(aes(color=Genre))
+```
+
+We can see that:
+
+There is a difference in means of Global Sales between Sports Genre and Other Genres.
+
+### Challenge problem (required for 293A, bonus for 162): A third statistical test (correlation, linear regression, or t-test) and your interpretation of the result.
+
+Let's see the relationship between EU Sales and Critic Score.
+
+```{r}
+game_sales %>%
+  drop_na() %>%
+  select(EU_Sales, Critic_Score) %>%
+  cor()
+
+game_sales %>%
+  drop_na() %>%
+  select(EU_Sales, Critic_Score) %>%
+  cor(method="spearman")
+```
+
+By looking at the table of we can say that between EU Sales and Critic Score there is a positive correlation:
+
+Pearson: 0.21
+
+Spearman: 0.35
+
+## Conclusions
+
+1. There is a positive correlation between Global Sales and Critic Score but not a strong one because Pearson and Spearman are not big:
+Pearson 0.2373968
+Spearman 0.3829938
+
+2. There is a linear relation between Global Sales and Critic Score with p = 2.2e-16 < 0.05. But it is not a strong relation because R-squared is only 0.06. Meaning that only 6% of our dependable variable (Global Sales) is explained by our independent variable (Critic Score).
+
+3. Sports Genre has the largest average in Global Sales compared to Other Genres. Which is confirmed by a t-test with p = 5.314e-12 < 0.05. Meaning there is a difference in means of Global Sales between Sports Genre and Other Genres. Mean of Global Sales in Sports Genre is 0.3493888 and in Other Genres is 0.2796536. And with 95 percent confidence we can say that this difference in means will lay in interval: -0.08 -0.05
+
+4*. From Exploratory analysis of Categorical variables:
+
+1. Platforms: There are a 31 platforms available. And the largest amount of games is available on PS2 platform.
+
+2. Genre: The most number of games are in Action Genre. The least number of games are in Puzzle Genre.
+
+3. Publisher: There are 263 publishers. The largest number of games is published by Electronic Arts.
+
+4. Developers: There are 1,697 developers. The largest number of games is developed by Ubisoft.
+
+5. Rating: The most number of game are rated E (Everyone).
+
+5*. From third statistical test(correlation):
+
+There is a positive correlation between EU Sales and Critic Score but not a strong one because Pearson and Spearman are not big:
+
+Pearson: 0.2122475
+
+Spearman: 0.3514678
