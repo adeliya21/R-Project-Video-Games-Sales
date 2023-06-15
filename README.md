@@ -8,5 +8,5 @@ Each observation is Video game sales from Vgchartz and corresponding ratings fro
 
 - Data load
 - Exploratory analysis (Categorical and Qantative varibales) with ggplot
-- Correlation test (Pearosn and Spearman)
+- Correlation test (Pearson and Spearman)
 - Linear Regression test
