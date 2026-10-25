@@ -76,6 +76,6 @@ The analysis found a statistically significant difference between the groups, wi
 - Statistical methods: Pearson correlation, Spearman correlation, linear regression, and two-sample t-tests
 
 ## Dataset
-Source: Video Game Sales with Ratings — Kaggle
+Source: Video Game Sales with Ratings — Kaggle (https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings).
 
 The dataset contains video game sales figures alongside critic scores, user ratings, platform information, genres, publishers, developers, and ESRB ratings.
